@@ -61,7 +61,7 @@ build: $(KERNEL_BIN)
 
 iso: build
 	mkdir -p $(ISO_DIR)/boot/grub
-	cp $(KERNEL_BIN) $(ISO_DIR)/boot/kernel.bin
+	cp $(KERNEL_ELF) $(ISO_DIR)/boot/kernel.elf
 	cp boot/grub/grub.cfg $(ISO_DIR)/boot/grub/grub.cfg
 	$(GRUB_MKRESCUE) -o $(ISO_IMAGE) $(ISO_DIR)
 
