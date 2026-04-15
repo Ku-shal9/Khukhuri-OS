@@ -13,6 +13,7 @@ typedef enum {
 typedef struct {
     int pid;
     int state;
+    int priority;
     void (*entry_point)(void);
 } PCB;
 

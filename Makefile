@@ -15,11 +15,19 @@ KERNEL_ELF     := $(BUILD_DIR)/kernel.elf
 KERNEL_BIN     := $(BUILD_DIR)/kernel.bin
 ISO_IMAGE      := $(BUILD_DIR)/myos.iso
 
-ASM_OBJ        := $(BUILD_DIR)/kernel_entry.o
+ASM_OBJ        := $(BUILD_DIR)/kernel_entry.o \
+                  $(BUILD_DIR)/interrupts.o
 C_OBJS         := $(BUILD_DIR)/kernel.o \
                   $(BUILD_DIR)/screen.o \
+                  $(BUILD_DIR)/idt.o \
+                  $(BUILD_DIR)/isr.o \
+                  $(BUILD_DIR)/keyboard.o \
+                  $(BUILD_DIR)/timer.o \
                   $(BUILD_DIR)/memory.o \
-                  $(BUILD_DIR)/process.o
+                  $(BUILD_DIR)/process.o \
+                  $(BUILD_DIR)/fat.o \
+                  $(BUILD_DIR)/filesystem.o \
+                  $(BUILD_DIR)/kernel_shell.o
 
 .PHONY: all build iso run clean check-tools
 
@@ -36,7 +44,10 @@ $(BUILD_STAMP):
 	mkdir -p $(BUILD_DIR)
 	touch $(BUILD_STAMP)
 
-$(ASM_OBJ): kernel/kernel_entry.asm | $(BUILD_STAMP)
+$(BUILD_DIR)/kernel_entry.o: kernel/kernel_entry.asm | $(BUILD_STAMP)
+	$(AS) -f elf32 $< -o $@
+
+$(BUILD_DIR)/interrupts.o: kernel/interrupts.asm | $(BUILD_STAMP)
 	$(AS) -f elf32 $< -o $@
 
 $(BUILD_DIR)/kernel.o: kernel/kernel.c | $(BUILD_STAMP)
@@ -45,10 +56,31 @@ $(BUILD_DIR)/kernel.o: kernel/kernel.c | $(BUILD_STAMP)
 $(BUILD_DIR)/screen.o: drivers/screen.c | $(BUILD_STAMP)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/idt.o: kernel/idt.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/isr.o: kernel/isr.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/keyboard.o: drivers/keyboard.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/timer.o: drivers/timer.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/memory.o: memory/memory.c | $(BUILD_STAMP)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/process.o: process/process.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/fat.o: filesystem/fat.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/filesystem.o: filesystem/filesystem.c | $(BUILD_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/kernel_shell.o: shell/kernel_shell.c | $(BUILD_STAMP)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(KERNEL_ELF): $(ASM_OBJ) $(C_OBJS) linker.ld
