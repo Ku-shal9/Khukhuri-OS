@@ -29,7 +29,7 @@ C_OBJS         := $(BUILD_DIR)/kernel.o \
                   $(BUILD_DIR)/filesystem.o \
                   $(BUILD_DIR)/kernel_shell.o
 
-.PHONY: all build iso run clean check-tools
+.PHONY: all build iso run run-debug clean check-tools
 
 all: build
 
@@ -98,7 +98,10 @@ iso: build
 	$(GRUB_MKRESCUE) -o $(ISO_IMAGE) $(ISO_DIR)
 
 run: iso
-	$(QEMU) -cdrom $(ISO_IMAGE)
+	$(QEMU) -cdrom $(ISO_IMAGE) -no-reboot -no-shutdown
+
+run-debug: iso
+	$(QEMU) -cdrom $(ISO_IMAGE) -no-reboot -no-shutdown -d int,cpu_reset -D $(BUILD_DIR)/qemu.log
 
 clean:
 	rm -rf $(BUILD_DIR)

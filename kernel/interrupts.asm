@@ -11,13 +11,17 @@ idt_load:
     ret
 
 irq0:
+    pushad
     push dword 32
     call isr_handler
     add esp, 4
+    popad
     iretd
 
 irq1:
+    pushad
     push dword 33
     call isr_handler
     add esp, 4
+    popad
     iretd
