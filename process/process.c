@@ -40,3 +40,7 @@ void schedule(void) {
         scanned++;
     }
 }
+
+int get_process_count(void) {
+    return process_count;
+}

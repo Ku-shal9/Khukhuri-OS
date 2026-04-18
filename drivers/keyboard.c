@@ -26,6 +26,15 @@ static void outb(unsigned short port, unsigned char value) {
     __asm__ volatile("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
+static void handle_scancode(unsigned char scancode) {
+    if (scancode & 0x80) {
+        return;
+    }
+    if (scancode < 128 && keymap[scancode] != 0) {
+        khukhuri_shell_handle_char(keymap[scancode]);
+    }
+}
+
 void keyboard_init() {
     unsigned char mask = inb(0x21);
     mask &= (unsigned char)~0x02;
@@ -34,11 +43,13 @@ void keyboard_init() {
 
 void keyboard_handler() {
     unsigned char scancode = inb(0x60);
-    if (scancode & 0x80) {
-        return;
-    }
+    handle_scancode(scancode);
+}
 
-    if (scancode < 128 && keymap[scancode] != 0) {
-        khukhuri_shell_handle_char(keymap[scancode]);
+void keyboard_poll() {
+    unsigned char status = inb(0x64);
+    if (status & 0x01) {
+        unsigned char scancode = inb(0x60);
+        handle_scancode(scancode);
     }
 }

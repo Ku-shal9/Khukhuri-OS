@@ -19,5 +19,6 @@ typedef struct {
 
 void create_process(void (*func)(void));
 void schedule(void);
+int get_process_count(void);
 
 #endif

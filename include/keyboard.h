@@ -3,5 +3,6 @@
 
 void keyboard_init();
 void keyboard_handler();
+void keyboard_poll();
 
 #endif

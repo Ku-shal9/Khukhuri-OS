@@ -20,6 +20,6 @@ void kernel_main() {
     khukhuri_shell_init();
 
     while (1) {
-        __asm__ volatile("hlt");
+        keyboard_poll();
     }
 }

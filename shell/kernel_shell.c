@@ -2,12 +2,15 @@
 #include "screen.h"
 #include "timer.h"
 #include "filesystem.h"
+#include "memory.h"
+#include "process.h"
 
 #define KSHELL_MAX_LINE 256
 #define KSHELL_MAX_TOKENS 16
 
 static char line_buffer[KSHELL_MAX_LINE];
 static int line_pos = 0;
+static void* alloc_slots[8];
 
 static int kstrlen(const char* s) {
     int n = 0;
@@ -101,6 +104,8 @@ static void cmd_help(void) {
     print("  create <name>          Create file\n");
     print("  write <name> <text>    Write text to file\n");
     print("  read <name>            Read file\n");
+    print("  memtest                Test memory allocator\n");
+    print("  proctest               Test process table/scheduler\n");
 }
 
 static void cmd_calc(char* argv[], int argc) {
@@ -146,6 +151,36 @@ static void cmd_write(char* argv[], int argc) {
     } else {
         print("Write failed\n");
     }
+}
+
+static void dummy_process(void) {
+}
+
+static void cmd_memtest(void) {
+    int i;
+    for (i = 0; i < 8; i++) {
+        alloc_slots[i] = os_malloc(32 + (i * 8));
+    }
+    for (i = 0; i < 8; i += 2) {
+        if (alloc_slots[i] != 0) {
+            os_free(alloc_slots[i]);
+            alloc_slots[i] = 0;
+        }
+    }
+    print("memtest complete: allocated/free cycle done\n");
+}
+
+static void cmd_proctest(void) {
+    int before = get_process_count();
+    create_process(dummy_process);
+    create_process(dummy_process);
+    schedule();
+    schedule();
+    print("proctest count before: ");
+    print_int(before);
+    print(" after: ");
+    print_int(get_process_count());
+    putchar('\n');
 }
 
 static void execute_line(char* line) {
@@ -194,6 +229,10 @@ static void execute_line(char* line) {
                 putchar('\n');
             }
         }
+    } else if (kstrcmp(argv[0], "memtest") == 0) {
+        cmd_memtest();
+    } else if (kstrcmp(argv[0], "proctest") == 0) {
+        cmd_proctest();
     } else {
         print("Unknown command: ");
         print(argv[0]);
