@@ -60,10 +60,13 @@ static void remap_pic(void) {
 }
 
 void idt_set_gate(int num, unsigned long base) {
+    unsigned short cs_selector;
+    __asm__ volatile ("mov %%cs, %0" : "=r"(cs_selector));
+
     idt[num].base_low = base & 0xFFFF;
     idt[num].base_high = (base >> 16) & 0xFFFF;
 
-    idt[num].sel = 0x08;
+    idt[num].sel = cs_selector;
     idt[num].always0 = 0;
     idt[num].flags = 0x8E;
 }
