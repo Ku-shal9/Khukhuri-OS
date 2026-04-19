@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "timer.h"
+#include "mouse.h"
 
 static void outb(unsigned short port, unsigned char value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -19,6 +20,9 @@ void isr_handler(int interrupt) {
         pic_send_eoi(interrupt);
     } else if (interrupt == 33) {
         keyboard_handler();
+        pic_send_eoi(interrupt);
+    } else if (interrupt == 44) {
+        mouse_handler();
         pic_send_eoi(interrupt);
     }
 }

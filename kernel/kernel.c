@@ -1,24 +1,42 @@
 #include "screen.h"
+#include "printf.h"
 #include "idt.h"
 #include "keyboard.h"
 #include "timer.h"
 #include "filesystem.h"
-#include "khukhuri_shell.h"
+#include "console.h"
+#include "mouse.h"
 
-void kernel_main() {
+static void show_boot_banner(void) {
+    printf("\033[1;36m");
+    printf("+==========================================================+\n");
+    printf("|            K   H   U   K   H   U   R   I   -   O S        |\n");
+    printf("|                                                          |\n");
+    printf("|     ^^^^^^   ^^^^^^   ^^^^^^   ^^^^^^   ^^^^^^           |\n");
+    printf("|    /      \\ /      \\ /      \\ /      \\ /      \\          |\n");
+    printf("|   |  O S   |  O S   |  O S   |  O S   |  O S   |         |\n");
+    printf("|    \\______/ \\______/ \\______/ \\______/ \\______/          |\n");
+    printf("+==========================================================+\n");
+    printf("\033[1;33m");
+    printf("|  \033[1;31m*\033[1;33m  Secure boot gate enabled (PIN + shell keyword)   \033[1;31m*\033[1;33m  |\n");
+    printf("+==========================================================+\n");
+    printf("\033[0m\n");
+    printf("\033[1;32mKernel online.\033[0m \033[1;37mScroll:\033[0m PgUp/PgDn or mouse wheel if supported.\n\n");
+}
+
+void kernel_main(void) {
     clear_screen();
-    print("Kernel Boot Successful!");
-    print("Milestone 2 Start\n");
+    show_boot_banner();
 
     idt_init();
     keyboard_init();
     timer_init();
+    mouse_init();
     fs_init();
-    __asm__ volatile("sti");
 
-    print("Interrupt system ready\n");
-    khukhuri_shell_init();
-    print("Keyboard: IRQ1 only (PS/2 set 1)\n");
+    console_init();
+
+    __asm__ volatile("sti");
 
     while (1) {
         __asm__ volatile("hlt");

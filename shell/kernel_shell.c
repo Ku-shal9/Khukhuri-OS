@@ -106,6 +106,7 @@ static void cmd_help(void) {
     print("  read <name>            Read file\n");
     print("  memtest                Test memory allocator\n");
     print("  proctest               Test process table/scheduler\n");
+    print("  (PgUp/PgDn scrolls the boot log when it fills the screen)\n");
 }
 
 static void cmd_calc(char* argv[], int argc) {

@@ -19,6 +19,7 @@ struct idt_ptr idtp;
 extern void idt_load();
 extern void irq0();
 extern void irq1();
+extern void irq12();
 
 static void outb(unsigned short port, unsigned char value) {
     __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
@@ -82,5 +83,6 @@ void idt_init() {
     remap_pic();
     idt_set_gate(32, (unsigned long)irq0);
     idt_set_gate(33, (unsigned long)irq1);
+    idt_set_gate(44, (unsigned long)irq12);
     idt_load();
 }

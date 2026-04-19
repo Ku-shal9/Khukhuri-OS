@@ -1,5 +1,5 @@
 #include "keyboard.h"
-#include "khukhuri_shell.h"
+#include "console.h"
 
 static const char keymap[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',
@@ -36,6 +36,10 @@ static void handle_scancode(unsigned char scancode) {
 
     if (extended_prefix) {
         extended_prefix = 0;
+        if (scancode & 0x80) {
+            return;
+        }
+        console_on_extended_scancode(scancode);
         return;
     }
 
@@ -44,7 +48,7 @@ static void handle_scancode(unsigned char scancode) {
     }
 
     if (scancode < 128 && keymap[scancode] != 0) {
-        khukhuri_shell_handle_char(keymap[scancode]);
+        console_on_key(keymap[scancode]);
     }
 }
 
