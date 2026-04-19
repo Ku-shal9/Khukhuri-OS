@@ -193,10 +193,6 @@ void screen_mouse_set_cell(int x, int y) {
     screen_redraw_hw();
 }
 
-void screen_mouse_wheel(int delta) {
-    screen_scroll_view(delta);
-}
-
 void putchar(char c) {
     if (esc_state == 0 && c == '\033') {
         esc_state = 1;
