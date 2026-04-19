@@ -108,8 +108,12 @@ static void cmd_help(void) {
     printf("  \033[1;32mcreate\033[0m / write / read  File operations\n");
     printf("  \033[1;32mmemtest\033[0m              Allocator stress (malloc/free)\n");
     printf("  \033[1;32mproctest\033[0m             Create dummy processes + 2 schedule() steps\n");
-    printf("  \033[1;32mproclist\033[0m             Print process table (PID, state, …)\n");
-    printf("  \033[1;32msched\033[0m [n]            Run schedule() n times (default 5), then proclist\n");
+    printf("  \033[1;32mproclist\033[0m             Process table + current policy\n");
+    printf("  \033[1;32msched\033[0m [n]            Run schedule() n times (default 5) + stats + table\n");
+    printf("  \033[1;32mpolicy\033[0m [rr|fcfs|hpf]  Set scheduler (HPF = highest priority first; alias: hfin)\n");
+    printf("  \033[1;32mstats\033[0m                schedule() calls & context switches\n");
+    printf("  \033[1;32mbench\033[0m                Run 9 steps x3 policies (RR, FCFS, HPF) with priorities 1,2,3\n");
+    printf("  \033[1;32mmkproc\033[0m [prio]        Create one dummy PCB (default prio 5)\n");
     printf("  \033[1;33mPgUp/PgDn\033[0m scroll the boot log when the screen fills.\n");
 }
 
@@ -178,17 +182,80 @@ static void cmd_memtest(void) {
 
 static void cmd_proctest(void) {
     int before = get_process_count();
-    create_process(dummy_process);
-    create_process(dummy_process);
+    create_process_prio(dummy_process, 1);
+    create_process_prio(dummy_process, 2);
     schedule();
     schedule();
-    printf("\033[1;35mproctest:\033[0m added 2 dummy PCBs; ran schedule() twice.\n");
+    printf("\033[1;35mproctest:\033[0m added 2 PCBs (prio 1 and 2); ran schedule() twice.\n");
     printf("  process count before: ");
     print_int(before);
     printf("  after: ");
     print_int(get_process_count());
     putchar('\n');
-    printf("  Use \033[1;36mproclist\033[0m or \033[1;36msched 5\033[0m to inspect states.\n");
+    printf("  Try \033[1;36mpolicy hpf\033[0m then \033[1;36mproclist\033[0m / \033[1;36msched 5\033[0m.\n");
+}
+
+static void cmd_policy(char** argv, int argc) {
+    if (argc < 2) {
+        printf("\033[1;36mCurrent policy:\033[0m \033[1;37m%s\033[0m\n", process_policy_name(process_get_policy()));
+        printf("\033[1;33mUsage:\033[0m policy rr | fcfs | hpf  (hpf = highest priority first; alias \033[1mhfin\033[0m)\n");
+        return;
+    }
+    if (kstrcmp(argv[1], "rr") == 0) {
+        process_set_policy(SCHED_RR);
+    } else if (kstrcmp(argv[1], "fcfs") == 0) {
+        process_set_policy(SCHED_FCFS);
+    } else if (kstrcmp(argv[1], "hpf") == 0 || kstrcmp(argv[1], "hfin") == 0) {
+        process_set_policy(SCHED_HPF);
+    } else {
+        printf("\033[1;31mUnknown policy.\033[0m Use rr, fcfs, or hpf.\n");
+        return;
+    }
+    printf("\033[1;32mPolicy set to %s\033[0m\n", process_policy_name(process_get_policy()));
+}
+
+static void cmd_stats(void) {
+    sched_stats_print();
+}
+
+static void cmd_bench(void) {
+    SchedPolicy pols[] = { SCHED_RR, SCHED_FCFS, SCHED_HPF };
+    const char* titles[] = {
+        "RR (round robin, circular)",
+        "FCFS (FIFO by creation index)",
+        "HPF (highest priority wins; tie: lower PID)"
+    };
+    printf("\033[1;35mBenchmark:\033[0m 3 tasks prio 1,2,3 — 9 schedule() steps each.\n\n");
+    for (int p = 0; p < 3; p++) {
+        process_reset_all();
+        sched_stats_reset();
+        process_set_policy(pols[p]);
+        create_process_prio(dummy_process, 1);
+        create_process_prio(dummy_process, 2);
+        create_process_prio(dummy_process, 3);
+        printf("\033[1;33m--- %s ---\033[0m\n", titles[p]);
+        for (int i = 0; i < 9; i++) {
+            schedule();
+        }
+        sched_stats_print();
+        process_dump_all();
+        printf("\n");
+    }
+    printf("\033[1;32mCompare context switch counts across policies.\033[0m\n");
+}
+
+static void cmd_mkproc(char** argv, int argc) {
+    int prio = 5;
+    if (argc >= 2) {
+        prio = katoi(argv[1]);
+    }
+    if (prio < 0) {
+        prio = 0;
+    }
+    create_process_prio(dummy_process, prio);
+    printf("\033[1;32mCreated\033[0m dummy PCB with priority ");
+    print_int(prio);
+    putchar('\n');
 }
 
 static void cmd_jhalak(void) {
@@ -267,6 +334,14 @@ static int execute_line(char* line) {
             n = 64;
         }
         process_schedule_times(n);
+    } else if (kstrcmp(argv[0], "policy") == 0) {
+        cmd_policy(argv, argc);
+    } else if (kstrcmp(argv[0], "stats") == 0) {
+        cmd_stats();
+    } else if (kstrcmp(argv[0], "bench") == 0) {
+        cmd_bench();
+    } else if (kstrcmp(argv[0], "mkproc") == 0) {
+        cmd_mkproc(argv, argc);
     } else {
         printf("\033[1;31mUnknown:\033[0m ");
         print(argv[0]);
