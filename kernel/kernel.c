@@ -18,9 +18,9 @@ void kernel_main() {
 
     print("Interrupt system ready\n");
     khukhuri_shell_init();
-    print("Keyboard input ready (set1/set2)\n");
+    print("Keyboard: IRQ1 only (PS/2 set 1)\n");
 
     while (1) {
-        keyboard_poll();
+        __asm__ volatile("hlt");
     }
 }
