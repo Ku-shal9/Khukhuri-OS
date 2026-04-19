@@ -20,5 +20,7 @@ typedef struct {
 void create_process(void (*func)(void));
 void schedule(void);
 int get_process_count(void);
+void process_dump_all(void);
+void process_schedule_times(int times);
 
 #endif

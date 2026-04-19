@@ -35,3 +35,13 @@ void set_next_block(int current, int next){ // choosing the next block
 int get_next_block(int current){ // getting the next block
     return fat_table[current];
 }
+
+int fat_count_free(void) {
+    int n = 0;
+    for (int i = 0; i < MAX_BLOCKS; i++) {
+        if (fat_table[i] == -1) {
+            n++;
+        }
+    }
+    return n;
+}

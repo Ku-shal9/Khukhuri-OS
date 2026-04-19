@@ -4,5 +4,6 @@
 void console_init(void);
 void console_on_key(char c);
 void console_on_extended_scancode(unsigned char code);
+void console_leave_shell(void);
 
 #endif

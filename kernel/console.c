@@ -114,6 +114,15 @@ void console_on_key(char c) {
     }
 }
 
+void console_leave_shell(void) {
+    if (state != CON_SHELL) {
+        return;
+    }
+    state = CON_GATE;
+    printf("\033[1;33mShell closed.\033[0m Type \033[1mshell\033[0m again to return.\n");
+    gate_prompt();
+}
+
 void console_on_extended_scancode(unsigned char code) {
     if (state == CON_LOCKOUT) {
         return;

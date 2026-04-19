@@ -1,5 +1,6 @@
 #include "../include/filesystem.h"
 #include "../include/fat.h"
+#include "../include/printf.h"
 
 static file_entry files[MAX_FILES]; // FAT table
 static char data_blocks[MAX_BLOCKS][BLOCK_SIZE]; // actual storage
@@ -95,4 +96,20 @@ int read_file(const char* name, char* buffer) {
     }
 
     return bytes_read;
+}
+
+void fs_list_files(void) {
+    int any = 0;
+    printf("\033[1;36mName            Size  StartBlk\033[0m\n");
+    for (int i = 0; i < MAX_FILES; i++) {
+        if (files[i].name[0] == '\0') {
+            continue;
+        }
+        any = 1;
+        printf("  \033[1;37m%s\033[0m  size=%d  start_block=%d\n",
+            files[i].name, files[i].size, files[i].start_block);
+    }
+    if (!any) {
+        printf("\033[1;33m(no files yet — use create / write)\033[0m\n");
+    }
 }

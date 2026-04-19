@@ -14,5 +14,6 @@ void fs_init();
 int create_file(const char *name);
 int write_file(const char *name, const char *data, int size);
 int read_file(const char *name, char *buffer);
+void fs_list_files(void);
 
 #endif
