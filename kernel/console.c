@@ -110,7 +110,11 @@ void console_on_key(char c) {
 
     if (line_pos < GATE_LINE_LEN - 1) {
         line_buf[line_pos++] = c;
-        putchar(c);
+        if (state == CON_PIN) {
+            putchar('*');
+        } else {
+            putchar(c);
+        }
     }
 }
 

@@ -1,0 +1,37 @@
+# ============================================================================
+#  Khukhuri OS - Build + Browser Web Runner
+# ============================================================================
+FROM --platform=linux/amd64 ubuntu:22.04
+
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install cross-compilation toolchain and HTTP server runtime
+RUN apt-get update && apt-get install -y \
+    nasm \
+    gcc-i686-linux-gnu \
+    binutils-i686-linux-gnu \
+    make \
+    xorriso \
+    grub-pc-bin \
+    mtools \
+    python3 \
+    grub-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Provide i686-elf tool names expected by the Makefile
+RUN ln -s /usr/bin/i686-linux-gnu-gcc /usr/local/bin/i686-elf-gcc && \
+    ln -s /usr/bin/i686-linux-gnu-ld /usr/local/bin/i686-elf-ld && \
+    ln -s /usr/bin/i686-linux-gnu-objcopy /usr/local/bin/i686-elf-objcopy
+
+# Set the working directory
+WORKDIR /os
+
+# Copy project files into the image
+COPY . /os
+
+# Expose browser endpoint
+EXPOSE 8080
+
+# Build ISO and serve the project so it can boot in browser
+CMD ["bash", "-lc", "make iso && python3 -m http.server 8080 --bind 0.0.0.0"]

@@ -110,6 +110,6 @@ void fs_list_files(void) {
             files[i].name, files[i].size, files[i].start_block);
     }
     if (!any) {
-        printf("\033[1;33m(no files yet — use create / write)\033[0m\n");
+        printf("\033[1;33m(no files yet - use create / write)\033[0m\n");
     }
 }

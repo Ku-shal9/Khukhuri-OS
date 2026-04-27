@@ -16,7 +16,23 @@ static const char keymap[128] = {
     0,  0,   0,   0,   0,   0,   0,  0
 };
 
+static const char keymap_shift[128] = {
+    0,  27, '!', '@', '#', '$', '%', '^', '&', '*',
+    '(', ')', '_', '+', '\b', '\t', 'Q', 'W', 'E', 'R',
+    'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', 0,
+    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':',
+    '"', '~', 0,  '|', 'Z', 'X', 'C', 'V', 'B', 'N',
+    'M', '<', '>', '?', 0,  '*', 0,  ' ', 0,  0,
+    0,  0,   0,   0,   0,   0,   0,  0,   0,  0,
+    0,  0,   0,   0,   '-', 0,   0,  0,   '+', 0,
+    0,  0,   0,   0,   0,   0,   0,  0,   0,  0,
+    0,  0,   0,   0,   0,   0,   0,  0,   0,  0,
+    0,  0,   0,   0,   0,   0,   0,  0,   0,  0,
+    0,  0,   0,   0,   0,   0,   0,  0
+};
+
 static int extended_prefix = 0;
+static int shift_pressed = 0;
 
 static unsigned char inb(unsigned short port) {
     unsigned char result;
@@ -34,6 +50,15 @@ static void handle_scancode(unsigned char scancode) {
         return;
     }
 
+    if (scancode == 0x2A || scancode == 0x36) {
+        shift_pressed = 1;
+        return;
+    }
+    if (scancode == 0xAA || scancode == 0xB6) {
+        shift_pressed = 0;
+        return;
+    }
+
     if (extended_prefix) {
         extended_prefix = 0;
         if (scancode & 0x80) {
@@ -47,8 +72,11 @@ static void handle_scancode(unsigned char scancode) {
         return;
     }
 
-    if (scancode < 128 && keymap[scancode] != 0) {
-        console_on_key(keymap[scancode]);
+    if (scancode < 128) {
+        char ch = shift_pressed ? keymap_shift[scancode] : keymap[scancode];
+        if (ch != 0) {
+            console_on_key(ch);
+        }
     }
 }
 

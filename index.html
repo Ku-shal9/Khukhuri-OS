@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khukhuri OS | Web Boot</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        :root {
+            --bg-color: #20100f;
+            --bg-color-soft: #2b1715;
+            --accent-color: #d88a78;
+            --accent-bright: #f5c3b4;
+            --terminal-bg: #120b0a;
+            --text-primary: #f8ece7;
+            --text-muted: #d4bbb3;
+            --panel-bg: rgba(53, 29, 26, 0.76);
+            --panel-border: rgba(255, 201, 184, 0.2);
+            --good: #b7dd8e;
+            --warn: #ffd38d;
+            --bad: #ff9f9f;
+        }
+        body {
+            background:
+                radial-gradient(circle at 10% 5%, rgba(255, 168, 145, 0.16), transparent 38%),
+                radial-gradient(circle at 90% 20%, rgba(255, 204, 185, 0.08), transparent 35%),
+                linear-gradient(160deg, #1f1210, var(--bg-color-soft) 40%, var(--bg-color));
+            color: var(--text-primary);
+            font-family: "Inter", "Segoe UI", "Trebuchet MS", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px 14px 36px;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+        h1 {
+            color: var(--accent-color);
+            letter-spacing: 2.8px;
+            margin: 0;
+            font-size: 1.8rem;
+            text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), 0 0 16px rgba(216, 138, 120, 0.25);
+        }
+        #screen_container {
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 210, 198, 0.08);
+            background: var(--terminal-bg);
+            padding: 14px;
+            border-radius: 14px;
+            position: relative;
+            width: min(1100px, 96vw);
+            min-height: min(76vh, 760px);
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        #screen_container:focus {
+            outline: 2px solid rgba(242, 184, 168, 0.6);
+            outline-offset: 3px;
+        }
+        #screen_container > div {
+            width: 100%;
+            font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace !important;
+            font-size: 18px;
+            line-height: 1.45 !important;
+            letter-spacing: 0.2px;
+            color: #f6ede8;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            text-rendering: geometricPrecision;
+            min-height: 100%;
+        }
+        canvas {
+            display: block;
+            max-width: 100% !important;
+            width: 100% !important;
+            height: auto !important;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: pixelated;
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        button {
+            background: linear-gradient(180deg, rgba(216, 138, 120, 0.2), rgba(216, 138, 120, 0.1));
+            border: 1px solid rgba(242, 184, 168, 0.45);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            cursor: pointer;
+            border-radius: 9px;
+            transition: all 0.3s;
+            font-size: 0.96rem;
+            font-weight: 600;
+            touch-action: manipulation;
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+        }
+        button.link-button {
+            text-decoration: none;
+        }
+        button:hover {
+            background: linear-gradient(180deg, rgba(216, 138, 120, 0.42), rgba(216, 138, 120, 0.2));
+            border-color: var(--accent-bright);
+            transform: translateY(-1px);
+        }
+        .status {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.83rem;
+            color: var(--text-muted);
+            text-align: center;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            max-width: 850px;
+            width: calc(100% - 24px);
+        }
+        .info-section {
+            margin-top: 30px;
+            max-width: 950px;
+            width: 100%;
+            padding: 24px;
+            background: linear-gradient(165deg, rgba(61, 34, 31, 0.82), rgba(43, 24, 22, 0.78));
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(8px);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 14px;
+            margin-top: 20px;
+        }
+        .info-card h3 {
+            color: var(--accent-color);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .info-card p {
+            font-size: 0.9rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        .info-card {
+            border: 1px solid rgba(255, 198, 180, 0.16);
+            border-radius: 10px;
+            background: rgba(20, 10, 9, 0.2);
+            padding: 14px;
+        }
+        .section-title {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #ffd8cc;
+            letter-spacing: 0.5px;
+        }
+        .section-lead {
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: rgba(18, 9, 8, 0.45);
+            border: 1px solid rgba(255, 197, 178, 0.16);
+        }
+        .command-table th,
+        .command-table td {
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 191, 171, 0.1);
+        }
+        .command-table th {
+            color: #ffd4c6;
+            font-weight: 700;
+            background: rgba(255, 173, 146, 0.08);
+        }
+        .command-table tr:last-child td {
+            border-bottom: none;
+        }
+        .command-name {
+            font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+            color: #ffe4db;
+            font-size: 0.86rem;
+            letter-spacing: 0.2px;
+        }
+        .tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            color: #ffd8ca;
+            border: 1px solid rgba(255, 192, 171, 0.35);
+            background: rgba(255, 167, 138, 0.08);
+        }
+        .kbd {
+            background: rgba(255, 232, 220, 0.12);
+            border: 1px solid rgba(255, 208, 192, 0.35);
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            color: #ffe7de;
+            font-size: 0.75rem;
+            padding: 1px 6px;
+            font-family: monospace;
+        }
+        /* Mobile Keyboard Helper */
+        #mobile_input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+        @media (max-width: 800px) {
+            body {
+                padding: 10px 0;
+                justify-content: flex-start;
+                overflow-y: auto;
+                height: auto;
+            }
+            .info-section {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            #screen_container {
+                border-left: none;
+                border-right: none;
+                border-radius: 0;
+                padding: 6px 0 0;
+                width: 100vw;
+                min-height: 62vh;
+            }
+            .controls {
+                padding: 0 10px;
+                box-sizing: border-box;
+                gap: 5px;
+            }
+            button {
+                padding: 10px;
+                font-size: 0.85rem;
+                min-width: 80px;
+            }
+            .info-section {
+                padding: 16px 12px;
+            }
+            .command-table th,
+            .command-table td {
+                padding: 8px 9px;
+                font-size: 0.83rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+            <h1>KHUKHURI OS</h1>
+    </div>
+
+    <div id="screen_container" tabindex="0" onpointerdown="prepareKeyboardFocus(event)">
+        <!-- v86 will render the VGA screen here -->
+        <div style="white-space: pre; font-family: Courier, monospace; line-height: 14px"></div>
+        <canvas style="display: none"></canvas>
+    </div>
+
+    <!-- Hidden input to trigger mobile keyboard -->
+    <input type="text" id="mobile_input" autocomplete="off" autocapitalize="none" spellcheck="false">
+
+    <div class="controls">
+        <button onclick="window.location.reload()">Restart OS</button>
+        <button onclick="downloadISO()">Download ISO</button>
+        <button onclick="document.getElementById('keyboard_help').scrollIntoView({behavior: 'smooth'})">Keyboard Help</button>
+        <button class="link-button" onclick="window.open('https://github.com/Ku-shal9/bsit338-os-project', '_blank', 'noopener')">GitHub</button>
+    </div>
+
+    <div class="status" id="status">Status: Waiting for initialization...</div>
+
+    <div class="info-section">
+        <h2 class="section-title">Command Overview</h2>
+        <p class="section-lead">Core shell commands available after boot. Organized for quick lookup while testing features in-browser.</p>
+        <table class="command-table">
+            <thead>
+                <tr>
+                    <th>Command</th>
+                    <th>Purpose</th>
+                    <th>Category</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="command-name">sahayog</td>
+                    <td>Shows the shell help menu and command hints.</td>
+                    <td><span class="tag">General</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">safa</td>
+                    <td>Clears the terminal screen.</td>
+                    <td><span class="tag">General</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">samaya</td>
+                    <td>Displays current time from RTC.</td>
+                    <td><span class="tag">System</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">jhalak</td>
+                    <td>Shows compact FAT and file summary.</td>
+                    <td><span class="tag">Filesystem</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">fatlist</td>
+                    <td>Lists all files with size and start block.</td>
+                    <td><span class="tag">Filesystem</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">create / write / read</td>
+                    <td>Create files, write content, and read back data.</td>
+                    <td><span class="tag">Filesystem</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">proclist / thlist / sched / policy</td>
+                    <td>Inspect process/thread state and scheduler policy.</td>
+                    <td><span class="tag">Process</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">mkproc / mkthr</td>
+                    <td>Spawn demo processes and threads for scheduler tests.</td>
+                    <td><span class="tag">Process</span></td>
+                </tr>
+                <tr>
+                    <td class="command-name">calc</td>
+                    <td>Runs shell math utility.</td>
+                    <td><span class="tag">Utility</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>Kernel Features</h3>
+                <p>• Custom boot banner and shell flow<br>• Keyboard, timer, mouse, and filesystem drivers<br>• Interrupt + IDT initialization sequence<br>• Lightweight kernel loop for stability</p>
+            </div>
+            <div class="info-card">
+                <h3>How Browser Boot Works</h3>
+                <p>• `libv86.js` runs an x86 emulator in JavaScript<br>• BIOS and VGA BIOS are loaded from CDN<br>• Your local `build/os.iso` is mounted as CD-ROM<br>• System starts automatically once assets load</p>
+            </div>
+            <div class="info-card">
+                <h3 id="keyboard_help">Keyboard Help</h3>
+                <p>Click inside the emulator screen first.<br><span class="kbd">Ctrl</span> + <span class="kbd">Option</span> (Mac) or <span class="kbd">Ctrl</span> + <span class="kbd">Alt</span> (Windows/Linux) releases mouse capture.<br>On mobile, tap screen to open keyboard input.<br>Use your shell commands as usual after boot.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var emulator = null;
+
+        function downloadISO() {
+            window.open('build/os.iso', '_blank');
+        }
+
+        function isTouchDevice() {
+            return window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+        }
+
+        function prepareKeyboardFocus(event) {
+            const screen = document.getElementById("screen_container");
+            const mobileInput = document.getElementById("mobile_input");
+
+            if (isTouchDevice()) {
+                mobileInput.focus();
+                return;
+            }
+
+            // Keep focus on emulator area for desktop keyboards.
+            if (event) event.preventDefault();
+            mobileInput.blur();
+            screen.focus();
+        }
+
+        async function fileExists(url) {
+            try {
+                const response = await fetch(url, { method: "HEAD", cache: "no-store" });
+                return response.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function v86_loaded() {
+            var status = document.getElementById("status");
+            if (status) status.innerText = "Status: Emulator engine loaded. Searching boot starter...";
+            
+            setTimeout(function() {
+                var starter = null;
+                if (typeof window.V86Starter === "function") starter = window.V86Starter;
+                else if (typeof window.V86 === "function") starter = window.V86;
+                else if (window.v86 && typeof window.v86.V86Starter === "function") starter = window.v86.V86Starter;
+                else if (window.V86 && typeof window.V86.V86Starter === "function") starter = window.V86.V86Starter;
+                else if (typeof V86Starter === "function") starter = V86Starter;
+                
+                if (starter) {
+                    status.innerText = "Status: Hardware starter found. Initializing Khukhuri OS...";
+                    initEmulator(starter);
+                } else {
+                    status.innerText = "Critical Error: Emulator engine loaded but could not be initialized.";
+                }
+            }, 200);
+        }
+
+        function v86_error() {
+            var status = document.getElementById("status");
+            if (status) status.innerHTML = "Critical Error: Could not load the emulator engine.";
+        }
+
+        async function initEmulator(Starter) {
+            var status = document.getElementById("status");
+            const isoPath = "build/os.iso";
+
+            if (!(await fileExists(isoPath))) {
+                status.innerHTML = "Error: <b>build/os.iso</b> not found. Build the ISO first (`make iso`) then refresh.";
+                return;
+            }
+            
+            var settings = {
+                wasm_path: "https://cdn.jsdelivr.net/npm/v86/build/v86.wasm",
+                memory_size: 128 * 1024 * 1024,
+                vga_memory_size: 8 * 1024 * 1024,
+                screen_container: document.getElementById("screen_container"),
+                bios: { url: "https://cdn.jsdelivr.net/npm/v86/bios/seabios.bin" },
+                vga_bios: { url: "https://cdn.jsdelivr.net/npm/v86/bios/vgabios.bin" },
+                cdrom: { url: isoPath },
+                autostart: true,
+            };
+
+            try {
+                emulator = new Starter(settings);
+                
+                emulator.add_listener("emulator-ready", function() {
+                    status.innerText = "Status: Hardware ready. Booting Khukhuri OS...";
+                    document.getElementById("screen_container").focus();
+                });
+
+                emulator.add_listener("download-progress", function(e) {
+                    status.innerText = "Status: Downloading " + e.file_name + " (" + Math.round(e.loaded/e.total*100) + "%)";
+                });
+
+                emulator.add_listener("download-error", function(e) {
+                    status.innerText = "Error: Failed to load " + e.file_name + ". Verify files and network access.";
+                });
+
+            } catch (e) {
+                status.innerText = "Critical Error: " + e.message;
+            }
+        }
+
+        (function setupMobileKeyboardBridge() {
+            const mobileInput = document.getElementById("mobile_input");
+            if (!mobileInput) return;
+
+            mobileInput.addEventListener("input", function() {
+                if (!emulator || typeof emulator.keyboard_send_text !== "function") return;
+                if (!mobileInput.value) return;
+                emulator.keyboard_send_text(mobileInput.value);
+                mobileInput.value = "";
+            });
+
+            mobileInput.addEventListener("keydown", function(e) {
+                if (!emulator || typeof emulator.keyboard_send_text !== "function") return;
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    emulator.keyboard_send_text("\n");
+                    mobileInput.value = "";
+                } else if (e.key === "Backspace" && !mobileInput.value) {
+                    e.preventDefault();
+                    emulator.keyboard_send_text("\b");
+                }
+            });
+        })();
+    </script>
+
+    <!-- v86 Emulator Library - Using verified NPM mirror -->
+    <script id="v86_script" src="https://cdn.jsdelivr.net/npm/v86/build/libv86.js" onload="v86_loaded()" onerror="v86_error()"></script>
+</body>
+</html>

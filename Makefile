@@ -13,7 +13,7 @@ BUILD_STAMP    := $(BUILD_DIR)/.dir
 ISO_DIR        := $(BUILD_DIR)/iso
 KERNEL_ELF     := $(BUILD_DIR)/kernel.elf
 KERNEL_BIN     := $(BUILD_DIR)/kernel.bin
-ISO_IMAGE      := $(BUILD_DIR)/myos.iso
+ISO_IMAGE      := $(BUILD_DIR)/os.iso
 
 ASM_OBJ        := $(BUILD_DIR)/kernel_entry.o \
                   $(BUILD_DIR)/interrupts.o
