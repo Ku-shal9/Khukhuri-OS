@@ -109,7 +109,7 @@ static void print_uptime(unsigned int ticks) {
 }
 
 static void cmd_help(void) {
-    printf("\033[1;36mMiniShell by Kushal - Kernel Mode\033[0m\n");
+    printf("\033[1;36mMiniShell - Kernel Mode\033[0m\n");
     printf("\033[1;37m---------------------------[ General ]---------------------------\033[0m\n");
     printf("  \033[1;32msahayog\033[0m                 Show this help\n");
     printf("  \033[1;32mnikli\033[0m                   Exit shell (return to gate)\n");
